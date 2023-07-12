@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html>
+
+<title>Габеркорн ПИ-13</title>
+<h2 style="font-size: 3rem; width:1000px; border: 2px solid #000; background-color: LightGreen; padding-top:10px; padding-bottom:10px">Симуляция естественного отбора</h2>
+<style type="text/css">
+
+   TD.leftcol {
+    width: 820px; /* Ширина левой колонки с рисунком */
+    vertical-align: top; /* Выравнивание по верхнему краю */
+   }
+   
+   
+   
+   body{
+    width: 1800px;	height: 900px; /* Размер веб-страницы*/
+
+            background-color: Moccasin	;
+}
+
+  h2 {
+ margin-left:20px
+   }
+div {
+background-color: LightSalmon;
+padding: 1px 11px 10px 10px;
+  border: 2px groove black;
+}
+#rectangle {
+border: 3px solid black;
+border-radius: 10px;
+    width: 450px;
+    height: 540px;
+    background: LightBlue;
+	position:absolute;
+	top: 270px;
+    left: 1120px;
+	font-size: 19px;
+	
+
+}
+
+img {
+ width: 200px;
+    height: 180px;
+position:absolute;
+	top: 462px;
+    left: 321px;
+	font-size: 19px;
+	}
+#img_box {
+border: 0px solid black;
+	background: Moccasin;
+}
+
+
+
+  </style>
+  
+  <body> 
+  
+   <div  id="img_box"><img  src="1.avif"></div>
+  	<table width="40%" cellspacing="10" cellpadding="0"  >  
+   <tr> 
+    <td class="leftcol"><canvas id="canvas" style="border-radius: 20px; border: 3px ridge #000; background:LightCyan" width="800px" height="750px"></canvas></td>
+    <td valign="top">
+	    <h3 style="font-size: 30px;  margin-bottom: -10px;">Голод</h3>
+    <h1><time>0 г.</time></h1>
+    
+	
+<div class="col-md-3">
+	<h3 style="font-size: 18px;  font-weight: normal;  margin-bottom: 0px; ">Кол-во хорошей еды</h3>
+	<input id="fieldFood" type="number" placeholder="5">
+
+
+	
+		<h3 style="font-size: 18px;  font-weight: normal;  margin-bottom: 0px;">Кол-во плохой еды</h3>
+	<input id="fieldDisease" type="number" placeholder="5">
+
+   	<h3 style="font-size: 18px;  font-weight: normal;  margin-bottom: 0px;">Исходная численность</h3>
+	
+	<input id="fieldPopulation" type="number" placeholder="15" >
+
+	
+	<h3 style="font-size: 18px;  font-weight: normal;  margin-bottom: 0px;">Максимальная численность</h3>
+	
+	<input id="fieldMAX" type="number" placeholder="200">
+	
+	
+	<br><br><br>
+	<button id="strt">Запуск</button>
+	<button id="stp">Остановить</button>
+	<button id="stp6">Возобновить</button>
+
+
+<br>
+
+	Выбор скорости:
+
+	<br>
+	<button id="speed1">=</button>
+	<button id="speed2">></button>
+	<button id="speed3">>></button>
+	<button id="speed4">>>></button>
+	
+	
+
+	</div>
+	</td>
+   </tr>
+  </table>
+  
+ <div id="rectangle"><br>Используйте кнопки:<br> <br>
+ 
+ 
+«Запуск« – чтобы начать новую симуляцию<br>
+«Остановить» и «Возобновить» - чтобы остановить и продолжить текущую симуляцию.<br><br>
+После того, как вы нажали кнопку «Запуск», станет доступна новая кнопка «Остановить», используйте ее чтобы остановить текущую симуляцию. 
+<br>С нажатием кнопки «Остановить» откроется доступ к кнопке «Возобновить», нажмите ее чтобы продолжить текущую симуляцию.<br><br>
+Для ускорения симуляции вы можете использовать кнопки:<br><br>
+=: начальная скорость симуляции<br>
+>: увеличенная в 2 раза скорость симуляции<br>
+>>: увеличенная в 3 раза скорость симуляции<br>
+>>>: увеличенная в 4 раза скорость симуляции<br><br>
+
+Вы можете в любой момент ускорить симуляцию, а также вернуться к ее обычной скорости. 
+</div>
+  
+ 
+ </body>
+
+
+<script type="text/javascript">
+	
+	var canvas, ctx, W, H;
+	
+	var h1 = document.getElementsByTagName('h1')[0];
+	
+	var sec = 0;
+	var f = 1;
+	var test = 1;
+	var t;
+
+	var popLimit = 30;
+	var ChangeSpeed = 1;
+	var ChangeRad = 10;
+
+	var OldX=0, OldY = 0;
+
+	//Нажимание кнопок
+	var start = document.getElementById('strt');
+	var stop = document.getElementById('stp');
+	 stop.style.visibility = "hidden";
+	
+	var vozobnov = document.getElementById('stp6');
+	vozobnov.style.visibility = "hidden";
+	
+	var speed1 = document.getElementById('speed1');
+	var speed2 = document.getElementById('speed2');
+	var speed3 = document.getElementById('speed3');
+	var speed4 = document.getElementById('speed4');
+
+	//Функция кнопки Запуск
+	start.onclick = function(){
+	
+		f = 1;
+		sec = 0;
+		ChangeSpeed = 1;
+		h1.textContent = sec + ' г.';
+
+		populationCount = parseInt(document.getElementById('fieldPopulation').value);
+		if ( !populationCount ) populationCount = 20; 
+
+		popLimit = parseInt(document.getElementById('fieldMAX').value);
+		if ( !popLimit ) popLimit = 60; 
+
+		FoodCount = parseInt(document.getElementById('fieldFood').value);
+		if ( !FoodCount ) FoodCount = 5; 
+
+		diseaseCount = parseInt(document.getElementById('fieldDisease').value);
+		if ( !diseaseCount ) diseaseCount = 5; 
+
+		population = [];
+		popFood = [];
+		popDisease = [];
+
+		window.cancelAnimationFrame(null);
+		delPopulation();
+		new Creatures().unitUnification();
+
+		new disease().unitUnification();
+		new food().unitUnification();
+
+		if (test){
+		timer();
+		unitDraw();
+		}
+
+		test = 0;
+		stop.style.visibility = "visible";
+		vozobnov.style.visibility = "hidden";
+		img_box.style.visibility="hidden";
+	}
+	
+	
+	//Функция кнопки >>>
+	speed4.onclick = function(){
+		ChangeSpeed = 9;
+	}
+	//Функция кнопки >>
+	speed3.onclick = function(){
+		ChangeSpeed = 6;
+	}
+	//Функция кнопки >
+	speed2.onclick = function(){
+		ChangeSpeed = 3;
+	}
+	//Функция кнопки =
+	speed1.onclick = function(){
+		ChangeSpeed = 1;
+	}
+	
+	
+	//Функция кнопки возобновить
+	vozobnov.onclick = function() {
+	f = 1;
+		sec = 0;
+		ChangeSpeed = 1;
+
+		if (test){
+		timer();
+		unitDraw();
+		}
+
+		test = 0;
+		 vozobnov.style.visibility = "hidden";
+		  stop.style.visibility = "visible";
+	}
+	
+	
+	
+	//Функция кнопки Остановить
+	stop.onclick = function() {
+		f = 0;
+		test = 1;
+		clearTimeout(t);
+		
+		 vozobnov.style.visibility = "visible";
+		 stop.style.visibility = "hidden";
+    	stopDraw();
+	}
+
+	window.onload = unit;
+
+	class Creatures {
+		constructor(x,y, xstep,ystep, evolution){
+			this.x = x;
+			this.y = y;
+
+			this.radius = ChangeRad;
+
+			this.xstep = xstep;
+			this.ystep = ystep;
+
+			this.evolution = evolution;
+			this.time = 0;
+
+			this.collide = false;
+		}
+		unitSeparation(evolution2,x2,y2) {
+
+			let rnd = Math.random()*10+40;
+
+			let xx,yy;
+
+			if (this.x > x2 && this.x + 100 < W){
+				xx = this.x + rnd;
+				yy = this.y;
+			}
+			else{
+				xx = x2 - rnd;
+				yy = y2;
+			}
+
+			if (this.y - 100 > 0)
+				yy -= rnd;
+			else
+				yy += rnd;
+
+			var xV   = parseInt(Math.random()*2);
+			var yV   = parseInt(Math.random()*2);
+
+			xV == 0 ? xV = 1 : xV = -1;
+			yV == 0 ? yV = 1 : yV = -1;
+
+			let h = new Creatures(xx, yy, xV, yV, (this.evolution + evolution2)/2);
+
+			population.push(h);
+		}
+		unitUnification(){
+			for (var i=0;i<populationCount;i++) {
+
+				let rndX = Math.random()*(W-60) + 30;
+				let rndY = Math.random()*(H-60) + 30;
+	
+				var xV   = parseInt(Math.random()*2);
+				var yV   = parseInt(Math.random()*2);
+
+				xV == 0 ? xV = 1 : xV = -1;
+				yV == 0 ? yV = 1 : yV = -1;
+
+				let h = new Creatures(rndX, rndY, xV, yV, 0);
+
+				population.push(h);
+			}
+		}
+	}
+
+	class food {
+		constructor(x,y){
+			this.x = x;
+			this.y = y;
+
+			this.radius = 8;
+
+			this.collide = false;
+		}
+		unitUnification(){
+		for (var i=0;i<FoodCount;i++) {
+
+			let rndX = Math.random()*(W-60) + 30;
+			let rndY = Math.random()*(H-60) + 30;
+
+			let t = new food(rndX, rndY);
+
+			popFood.push(t);
+		}
+	}
+	}
+	class disease {
+		constructor(x,y){
+			this.x = x;
+			this.y = y;
+
+			this.radius = 8;
+
+			this.collide = false;
+		}
+		unitUnification(){
+		for (var i=0;i<diseaseCount;i++) {
+			
+			let rndX = Math.random()*(W-60) + 30;
+			let rndY = Math.random()*(H-60) + 30;
+
+			let b = new disease(rndX, rndY);
+
+			popDisease.push(b);
+		}
+	}
+	}
+
+	//Инициализация окна
+	function unit() {
+		canvas = document.getElementById("canvas");
+		ctx    = canvas.getContext('2d');
+		W      = canvas.width;
+		H      = canvas.height;		
+	}
+
+	//Таймер для г.
+	function tick(){
+    	sec+=2.5;
+    	h1.textContent = sec + ' г.';
+    	for (var i=0;i<population.length;i++) {
+    		var h = population[i];
+    		h.time ++;
+    	}
+    	timer();
+	}	
+	//Таймер
+	function timer() {
+    	t = setTimeout(tick, 1000 / ChangeSpeed);
+	}
+	//Функция для удаления всех видов
+	function delPopulation(){
+		population.splice(0,population.length);
+		popFood.splice(0,popFood.length);
+		popDisease.splice(0,popDisease.length);
+	}
+	
+	//Анимирование, цвет
+	function unitDraw() {
+		ctx.clearRect(0,0,W,H);
+		detectCollisions();
+		DetectGB();
+
+		if (!population.length){
+			alert('Вымирание');
+			stop.onclick();
+			vozobnov.style.visibility = "hidden";
+			
+		}
+     //Отображение еды
+		for (var j = 0; j < popFood.length; j++){
+			var t = popFood[j];
+			ctx.beginPath();
+			ctx.arc(t.x,t.y,t.radius,0,Math.PI*2, 0);
+			ctx.closePath();
+
+			ctx.fillStyle   = 'Olive';
+			ctx.strokeStyle = 'black';
+			ctx.fill();
+		}
+	//Отображение болезней	
+		for (var j = 0; j < popDisease.length; j++){
+			var b = popDisease[j];
+
+			ctx.beginPath();
+			ctx.arc(b.x,b.y,t.radius,0,Math.PI*2, 0);
+			ctx.closePath();
+
+			ctx.fillStyle   = 'SaddleBrown';
+			ctx.strokeStyle = 'black';
+			ctx.fill();
+		}
+		
+		for (var i = 0; i < population.length; i++) {
+			var h = population[i];
+			if (h.time >= 25){
+				population.splice(i,1);
+				i--;
+				continue;
+			}
+
+			h.x += ChangeSpeed * 0.6 * h.xstep;
+			h.y += ChangeSpeed *  0.6 * h.ystep;
+
+			if ( h.x-h.radius <= 0 || h.x+h.radius >= W )
+				h.xstep = -h.xstep;
+		
+			if ( h.y-h.radius <= 0 || h.y+h.radius >= H ) 
+				h.ystep = -h.ystep;
+
+			ctx.beginPath();
+			ctx.arc(h.x,h.y,h.radius,0, Math.PI*2, 0);
+			ctx.closePath();
+
+			if (h.x - h.radius - 20 > 0 && h.x + h.radius + 20 < W && h.y - h.radius - 20 > 0 && h.y + h.radius + 20 < H){
+				if (h.time >= 5 && h.time < 10)
+					h.radius = ChangeRad+5;
+				
+				if (h.time >= 10 && h.time < 15)
+					h.radius = ChangeRad+10;
+
+				if (h.time >= 15 && h.time < 20)
+					h.radius = ChangeRad+15;
+
+				if (h.time >= 20 && h.time < 25)
+					h.radius = ChangeRad+20;
+					
+			}
+
+
+			if ( h.evolution <= -75) {
+				ctx.fillStyle   = 'Black';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > -75 && h.evolution <= -50) {
+				ctx.fillStyle   = 'SaddleBrown';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > -50 && h.evolution <= -30) {
+				ctx.fillStyle   = 'Gray ';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > -30 && h.evolution <= -15) {
+				ctx.fillStyle   = 'LightGray';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > -15 && h.evolution <= 15) {
+				ctx.fillStyle   = 'Wheat';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > 15 && h.evolution <= 30) {
+				ctx.fillStyle   = 'DarkSeaGreen';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > 30 && h.evolution <= 50) {
+				ctx.fillStyle   = 'YellowGreen';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > 50 && h.evolution <= 75) {
+				ctx.fillStyle   = 'MediumSeaGreen';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+			if ( h.evolution > 75) {
+				ctx.fillStyle   = 'ForestGreen';
+				ctx.strokeStyle = 'black';
+				ctx.fill();
+				ctx.stroke();
+			}
+		}
+		if (f)
+		window.requestAnimationFrame(unitDraw);
+
+	}
+	//Очистка поля
+	function stopDraw(){
+		ctx.clearRect(0,0,W,H);
+	}
+
+	//Столкновение с едой и голодом
+	function DetectGB(){
+		var h, t, b;
+
+		for (var i=0; i < population.length; i++){
+			population[i].collide = false;
+		}
+		for (var i=0; i < popFood.length; i++){
+			popFood[i].collide = false;
+		}
+		for (var i=0; i < popDisease.length; i++){
+			popDisease[i].collide = false;
+		}
+
+		for ( var i=0;i<population.length;i++ ) {
+			h = population[i];
+			
+			for ( var j=0;j<popFood.length;j++ ) {
+				t = popFood[j];
+
+				let dx = h.x-t.x;
+				let dy = h.y-t.y;
+				let distance = Math.sqrt(dx*dx+dy*dy);
+
+				if ( distance < h.radius + t.radius ) {
+					h.evolution += 5;
+					t.x = Math.random()*(W-60) + 30;
+					t.y = Math.random()*(H-60) + 30;
+				}
+			}
+			for ( var j=0;j<popDisease.length;j++ ) {
+				b = popDisease[j];
+
+				let bdx = h.x-b.x;
+				let bdy = h.y-b.y;
+				let bdistance = Math.sqrt(bdx*bdx+bdy*bdy);
+
+				if ( bdistance < h.radius + b.radius ) {
+					h.evolution -= 5;
+					b.x = Math.random()*(W-60) + 30;
+					b.y = Math.random()*(H-60) + 30;
+				}
+			}
+		}
+	}
+	//Столкновение объектов друг с другом (размножение)
+	function detectCollisions() 
+	{
+		var h1, h2;
+
+		for ( var i=0;i<population.length;i++ ) {
+			population[i].collide = false;
+		}
+
+		for ( var i=0;i<population.length;i++ ) {
+			h1 = population[i];
+			
+			for ( var j=i+1;j<population.length;j++ ) {
+				h2 = population[j];
+
+				let dx = h1.x-h2.x;
+				let dy = h1.y-h2.y;
+				let distance = Math.sqrt(dx*dx+dy*dy);
+
+				if ( distance < h1.radius + h2.radius){
+
+					let srX = (h1.x+h2.x)/2;
+					let srY = (h1.y+h2.y)/2;
+
+					if (srX < OldX - 20 || srX > OldX + 20 || srY < OldY - 20 || srY > OldY + 20){
+					//Передача опыта (наследство)
+					let hh = h1.evolution;
+
+					if (h1.time >= 1 && h2.time >= 1){
+						if (h1.evolution * h2.evolution >= 0){ //Если одного знака
+							if(Math.abs(h2.evolution) > Math.abs(h1.evolution))
+								if(Math.abs(h1.evolution) + Math.abs(h2.evolution)/10 <= 100 && Math.abs(h1.evolution) + Math.abs(h2.evolution)/10 <= Math.abs(h2.evolution))
+									h1.evolution += h2.evolution/10;
+							else{
+								if (Math.abs(h2.evolution) + Math.abs(h1.evolution)/10 <= 100 && Math.abs(h2.evolution) + Math.abs(h1.evolution)/10 <= Math.abs(h2.evolution))
+									h2.evolution += hh/10;
+							}
+						}
+						else{
+							h1.evolution += h2.evolution/10;
+							h2.evolution += hh/10;
+						}
+					}
+
+					//Появление потомка
+					let rndRod = Math.random()*100;
+
+					if (((h1.time >= 6 && h1.time < 10 && h2.time >= 6 && h2.time < 10) || (h1.time >= 11 && h1.time < 15 && h2.time >= 11 && h2.time < 15)) && population.length <= popLimit && rndRod <= 90){
+						h1.unitSeparation(h2.evolution,h2.x,h2.y);
+					}
+				}
+
+					OldX = srX;
+					OldY = srY;
+
+					h1.collide = true;
+					h2.collide = true;
+
+					let collision = {
+						x: h2.x-h1.x,
+						y: h2.y-h1.y
+					};
+
+					let collisionNormal = {
+						x: collision.x / distance,
+						y: collision.y / distance
+					};
+
+					let relV = {
+						x: h1.xstep-h2.xstep,
+						y: h1.ystep-h2.ystep
+					};
+
+					let speedV = relV.x*collisionNormal.x+relV.y*collisionNormal.y;
+
+					if ( speedV < 0 ) 
+						break;
+
+					h1.xstep -= speedV*collisionNormal.x;
+					h1.ystep -= speedV*collisionNormal.y; 
+
+					h2.xstep += speedV*collisionNormal.x;
+					h2.ystep += speedV*collisionNormal.y;
+
+					if ( Math.abs(h1.xstep) < 0.5 ) {
+						if ( h1.xstep < 0 ) {
+							h1.xstep = -1;
+						}
+						else {
+							h1.xstep = 1;
+						}
+					}
+					if ( Math.abs(h1.ystep) < 0.5 ) {
+						if ( h1.ystep < 0 ) {
+							h1.ystep = -1;
+						}
+						else {
+							h1.ystep = 1;
+						}
+					}
+
+
+					if ( Math.abs(h2.xstep) < 0.5 ) {
+						if ( h2.xstep < 0 ) {
+							h2.xstep = -1;
+						}
+						else {
+							h2.xstep = 1;
+						}
+					}
+					if ( Math.abs(h2.ystep) < 0.5 ) {
+						if ( h2.ystep < 0 ) {
+							h2.ystep = -1;
+						}
+						else {
+							h2.ystep = 1;
+						}
+					}
+				}
+			}
+		} 
+	}
+
+</script>
+</html>
